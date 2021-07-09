@@ -547,7 +547,7 @@ def find_ammonium_atoms(atoms):
     # this is based on covalent radii, easier than using pymatgens bonding strategies
     # cutoffs is a vector with the cutoff distance for each atom in the atoms object
     from ase.neighborlist import natural_cutoffs
-    cutoffs = natural_cutoffs(atoms)
+    cutoffs = natural_cutoffs(atoms, mult=1.1)
 
     # Find nitrogen atoms groups
     n_atoms = [a.index for a in atoms if a.symbol == 'N']
@@ -659,7 +659,7 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
             # Orient the new ligand like the deleted ligand
             # ligand_to_add will be rotated to match the ligand that was removed
             # Create a copy of the old ligand by copying the crystal and removing all atoms not part of the ligand
-            # This will preserve the periodicity and we dont need to worry about ligands that cross the periodic boundary
+            # Preserves the periodicity and we dont need to worry about ligands that cross the periodic boundary
             old_ligand = crystal.copy()
             del old_ligand[[a.index for a in crystal if a.index not in sg.nodes]]
             ligand_to_add = align_ligands(old_ligand, ligand_to_add)
@@ -676,11 +676,11 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
 
 def align_ligands(ligand1, ligand2):
     '''
-    Orient l2 to l1
+    Change the orientation of ligand2  as close as possible to ligand1
 
-    :param l1: ASE Atoms object
-    :param l2: ASE Atoms object
-    :return None
+    :param ligand1: ASE Atoms object
+    :param ligand2: ASE Atoms object
+    :return rotated ligand2 ASE Atoms object
     '''
     from scipy.spatial.transform import Rotation as R 
 
@@ -710,34 +710,22 @@ def align_ligands(ligand1, ligand2):
     l1.translate(-l1.positions[l1n])
     l2.translate(-l2.positions[l2n])
 
-    # Get the 'center-of-bonding'
     # Use as many atoms as are in the smaller ligand
     n_atoms = min(len(l1),len(l2))
 
     l1_nearest_indices = np.argsort(l1.get_all_distances(mic=any(l1.pbc), vector=False)[l1n])[1:n_atoms]
     l2_nearest_indices = np.argsort(l2.get_all_distances(mic=any(l2.pbc), vector=False)[l2n])[1:n_atoms]
     
-    l1_distances = l1.get_all_distances(mic=any(l1.pbc), vector=False)[l1n, l1_nearest_indices].reshape((-1,1)) 
-    l2_distances = l2.get_all_distances(mic=any(l2.pbc), vector=False)[l2n, l2_nearest_indices].reshape((-1,1))
-    
     # Sum the vectors to the n_atoms nearest neighbors
     l1_vectors = l1.get_all_distances(mic=any(l1.pbc), vector=True)[l1n, l1_nearest_indices]
     l2_vectors = l2.get_all_distances(mic=any(l2.pbc), vector=True)[l2n, l2_nearest_indices]
     
-    print('l1',np.hstack((l1.get_all_distances(mic=any(l1.pbc), vector=True)[l1n, l1_nearest_indices],l1_distances)))
-    print('l2',np.hstack((l2.get_all_distances(mic=any(l2.pbc), vector=True)[l2n, l2_nearest_indices],l2_distances)))
-    
-    rot, rmsd = R.align_vectors(a=l1_vectors,
-                          b=l2_vectors,
-                          weights=None)
+    rot, rmsd = R.align_vectors(a=l1_vectors, b=l2_vectors, weights=None)
 
     l2.positions = rot.apply(l2.positions)
-
-    print('l2',np.hstack((l2.get_all_distances(mic=any(l2.pbc), vector=True)[l2n, l2_nearest_indices],l2_distances)))
     
     # return l2 to original position
     l2.translate(ligand2.positions[l2n])
-
 
     return l2
 
