@@ -556,7 +556,7 @@ def find_ammonium_atoms(atoms):
     for n_index in n_atoms:
         nearest_indices = np.argsort(distances[n_index])
         # Call it an ammonium group if there are four bonds to nitrogen
-        if all([atoms.get_distance(n_index, a.index, mic=any(atoms.pbc)) <= (cutoffs[n_index]+cutoffs[a.index]) for a in atoms[nearest_indices[1:5]]]):
+        if all([atoms.get_distance(n_index, i, mic=any(atoms.pbc)) <= (cutoffs[n_index]+cutoffs[i]) for i in nearest_indices[1:5]]):
             ammonium_atoms.append(n_index)
 
     return ammonium_atoms
