@@ -432,7 +432,7 @@ class Intercalator:
             crystal_file: path to file describing the crystal
             intercalant_file: path to file describing the intercalant molecule
             vacuum_gap: size of the gap (in Angstroms) to create in the gallery
-            supercell_dimensions: size of supercell to create more space for intercalant e.g. (2,1,1) 
+            supercell_dimensions: size of supercell to create more space for intercalant e.g. (2,1,1)
 
         returns:
             None
@@ -466,7 +466,7 @@ class Intercalator:
                  }
 
         cif_files = []
-        
+
         # old code, could be used with a database instead of passing the crystal in
         #with os.scandir('./nmse_database/structures/') as file_iter:
         #    for entry in file_iter:
@@ -609,8 +609,18 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
     print(f'Found {len(ligand_subgraphs)} ligands.')
 
     # Choose which ligands to remove
-    # This should be more sophisticated, using spatial coordinates...
-    ligands_to_remove = ligand_subgraphs[::int(1/replace_fraction)]
+    ligands_to_remove= []
+    num_ligands_to_remove = np.round(replace_fraction*len(ligand_subgraphs), decimals=0)
+    if num_ligands_to_remove == 0:
+        print('Fraction to remove less than one, no changes made.')
+        return crystal
+
+    # Space out the ligands to be removed by index
+    # This should be more sophisticated, eg. using spatial coordinates instead of index
+    for i in range(1,1+len(ligand_subgraphs)):
+        if 0 == (i % (len(ligand_subgraphs)/num_ligands_to_remove)):
+            ligands_to_remove.append(i-1)
+
     print(f'Removing ligands: {ligands_to_remove}')
 
     # Check type of the ligand structure
@@ -639,10 +649,10 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
 
     # Add the new ligands
     for ligand_index in ligands_to_remove:
-        
+
         # Get the subgraph (atomic indices) of one of the deleted ligands
         sg = crystal_subgraphs[ligand_index]
-        
+
         # Find the ammonium nitrogen that was in the deleted ligand
         nitrogen_location = None
         for i, n_atom_index in enumerate(nitrogen_atoms):
@@ -652,10 +662,10 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
 
         if len(nitrogen_location):
             ligand_to_add = new_ligand.copy()
-            
+
             # Move the new ligand nitrogen atom to the position of the deleted ligand
             ligand_to_add.translate(nitrogen_location-ligand_to_add.positions[ligand_nitrogen_atom])
-            
+
             # Orient the new ligand like the deleted ligand
             # ligand_to_add will be rotated to match the ligand that was removed
             # Create a copy of the old ligand by copying the crystal and removing all atoms not part of the ligand
@@ -682,7 +692,7 @@ def align_ligands(ligand1, ligand2):
     :param ligand2: ASE Atoms object
     :return rotated ligand2 ASE Atoms object
     '''
-    from scipy.spatial.transform import Rotation as R 
+    from scipy.spatial.transform import Rotation as R
 
     l1 = ligand1.copy()
     l2 = ligand2.copy()
@@ -698,7 +708,7 @@ def align_ligands(ligand1, ligand2):
     else:
         print('Found more than one ammonium in ligand', str(l1))
         return
-    
+
     l2n = find_ammonium_atoms(l2)
     if len(l2n) == 1:
         l2n = l2n[0]
