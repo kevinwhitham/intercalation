@@ -1,5 +1,6 @@
 import os  # os.scandir
 from ase import Atoms
+from ase.parallel import parprint
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.io import cif  # self.read_cif_file
 from pymatgen.transformations.advanced_transformations import SQSTransformation  # order_structure
@@ -43,25 +44,25 @@ class Intercalator:
             crystal = cif.CifParser(cif_file)
 
             if crystal.has_errors:
-                print(f'Error parsing {cif_file}')
+                parprint(f'Error parsing {cif_file}')
             elif not len(crystal.as_dict()):
-                print(f'No structures found in {cif_file}')
+                parprint(f'No structures found in {cif_file}')
             else:
                 try:
                     structures = crystal.get_structures(primitive=False)
 
                     if len(structures) > 1:
                         if self.DEBUG > 0:
-                            print(f'Using first structure found in {cif_file}')
+                            parprint(f'Using first structure found in {cif_file}')
 
                     structure = structures[0]
 
                     if not len(structure):
-                        print(f'Empty structure found in {cif_file}')
+                        parprint(f'Empty structure found in {cif_file}')
                         structure = None
 
                     if self.DEBUG >= 1:
-                        print(f'Created a structure with {len(structure)} atoms from {cif_file}')
+                        parprint(f'Created a structure with {len(structure)} atoms from {cif_file}')
                 except:
                     pass
 
@@ -70,7 +71,7 @@ class Intercalator:
                     writer = cif.CifWriter(structure)
                     writer.write_file('original_structure.cif')
         except:
-            print(f'Error opening {cif_file}')
+            parprint(f'Error opening {cif_file}')
 
         return structure
 
@@ -134,7 +135,7 @@ class Intercalator:
 
             all_subgraphs = [u_graph.subgraph(c) for c in nx.connected_components(u_graph)]
 
-            print(f'Found {len(all_subgraphs)} subgraphs of lengths: {[len(sg) for sg in all_subgraphs]}')
+            parprint(f'Found {len(all_subgraphs)} subgraphs of lengths: {[len(sg) for sg in all_subgraphs]}')
 
         # For debugging
         # Draw an image of the graph network
@@ -146,7 +147,7 @@ class Intercalator:
     def structure_graph_to_subgraphs(self, structure_graph):
         # structure_graph.get_subgraphs_as_molecules will not work because it does not return
         # graphs that extend through periodic boundaries
-        # print(structure_graph.get_subgraphs_as_molecules())
+        # parprint(structure_graph.get_subgraphs_as_molecules())
 
         # Convert directed structure graph to an undirected graph
         # undirected graphs are required to find subgraphs with nx.connected_components
@@ -156,7 +157,7 @@ class Intercalator:
         all_subgraphs = [u_graph.subgraph(c) for c in nx.connected_components(u_graph)]
 
         if self.DEBUG >= 2:
-            print(f'Found {len(all_subgraphs)} subgraphs of lengths: {[len(sg) for sg in all_subgraphs]}')
+            parprint(f'Found {len(all_subgraphs)} subgraphs of lengths: {[len(sg) for sg in all_subgraphs]}')
 
         # For debugging
         # Draw an image of the sub graphs
@@ -202,7 +203,7 @@ class Intercalator:
                         break
 
         if self.DEBUG > 1:
-            print('Removing sites:', sites_to_remove)
+            parprint('Removing sites:', sites_to_remove)
 
         clean_structure.remove_sites(sites_to_remove)
         return clean_structure
@@ -220,7 +221,7 @@ class Intercalator:
         mean_c_coord = np.mean(c_coordinates)
 
         if self.DEBUG >= 2:
-            print(f'Mean c-axis coordinates for graph: {mean_c_coord}')
+            parprint(f'Mean c-axis coordinates for graph: {mean_c_coord}')
 
         return mean_c_coord
 
@@ -248,16 +249,16 @@ class Intercalator:
                 structure.translate_sites(indices=two_largest_subgraphs[0].nodes(), vector=translation_distance[1],
                                           frac_coords=False, to_unit_cell=False)
         else:
-            print('Structure must have exactly 2 bonding networks or subgraphs. Is this a Dion-Jacobsen structure?')
+            parprint('Structure must have exactly 2 bonding networks or subgraphs. Is this a Dion-Jacobsen structure?')
 
         return structure
 
     def make_slabs(self, structure, bonds=None):
         if self.DEBUG > 0:
-            print('Remember to cite these works when using pymatgen surface/slab generator code:')
-            print(
+            parprint('Remember to cite these works when using pymatgen surface/slab generator code:')
+            parprint(
                 'R. Tran, Z. Xu, B. Radhakrishnan, D. Winston, W. Sun, K. A. Persson, S. P. Ong, "Surface Energies of Elemental Crystals", Scientific Data,2016, 3:160080, doi: 10.1038/sdata.2016.80.)')
-            print(
+            parprint(
                 'Sun, W.; Ceder, G. Efficient creation and convergence of surface slabs, Surface Science, 2013, 617, 53–59, doi:10.1016/j.susc.2013.05.016.\n')
 
         # Need to tell the slab generator which direction to cut the slab
@@ -279,7 +280,7 @@ class Intercalator:
         slabs = slab_gen.get_slabs(bonds=bonds, max_broken_bonds=0, repair=False)
 
         if self.DEBUG >= 2:
-            print(f'Found {len(slabs)} slabs')
+            parprint(f'Found {len(slabs)} slabs')
 
         return slabs
 
@@ -293,7 +294,7 @@ class Intercalator:
                 out_file.write('\n\n')
 
             if self.DEBUG >= 1:
-                print(f'Combined {len(list_of_cif_files)} cif files as {combined_cif_filename}')
+                parprint(f'Combined {len(list_of_cif_files)} cif files as {combined_cif_filename}')
 
     def visualize_slabs(self, slabs):
         plot_limit = min(5, len(slabs))
@@ -363,10 +364,10 @@ class Intercalator:
 
         if self.DEBUG >= 3:
             crystal.write('crystal.cif')
-            print('Saved crystal before adjusting unit cell as crystal.cif')
+            parprint('Saved crystal before adjusting unit cell as crystal.cif')
 
         if self.DEBUG > 0:
-            print('Cell before intercalation: ', structure.cell.cellpar())
+            parprint('Cell before intercalation: ', structure.cell.cellpar())
 
         # Increase c-axis of crystal cell to accomodate intercalate
         crystal_cell = structure.get_cell()
@@ -376,7 +377,7 @@ class Intercalator:
 
         if self.DEBUG >= 3:
             structure.write('crystal_expanded_cell.cif')
-            print('Saved crystal with expanded cell as crystal_expanded_cell.cif')
+            parprint('Saved crystal with expanded cell as crystal_expanded_cell.cif')
 
         # Chage intercalate cell to match structure before moving atoms
         # Change intercalate unit cell to match symmetry of the crystal
@@ -398,18 +399,18 @@ class Intercalator:
         molecule.center(axis=(0, 1))
 
         if self.DEBUG > 0:
-            print('Translating intercalate by: ', crystal_original_height)
+            parprint('Translating intercalate by: ', crystal_original_height)
 
         if self.DEBUG >= 3:
             molecule.write('intercalant.cif')
-            print('Saved intercalant as intercalant.cif')
+            parprint('Saved intercalant as intercalant.cif')
 
         # Copy intercalate molecule atoms to structure
         for a in molecule:
             structure.append(a)
 
         if self.DEBUG > 0:
-            print('Cell after intercalation: ', structure.cell.cellpar())
+            parprint('Cell after intercalation: ', structure.cell.cellpar())
 
         return structure
 
@@ -531,7 +532,7 @@ class Intercalator:
                 cw.write_file('intercalated_structure.cif')
 
                 if self.DEBUG > 0:
-                    print('Saved intercalated crystal as intercalated_structure.cif')
+                    parprint('Saved intercalated crystal as intercalated_structure.cif')
 
                 if self.DEBUG >= 3:
                     self.visualize_slabs(slabs)
@@ -585,7 +586,7 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
         elif type(object) == Structure:
             return AseAtomsAdaptor.get_atoms(object)
         else:
-            print('Unknown crystal data type.')
+            parprint('Unknown crystal data type.')
             return None
 
     crystal = convert_to_ase(crystal)
@@ -595,24 +596,24 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
 
     # Get the indices of the ammonium group nitrogen crystal
     nitrogen_atoms = find_ammonium_atoms(crystal)
-    print(f'Found {len(nitrogen_atoms)} ammonium groups')
+    parprint(f'Found {len(nitrogen_atoms)} ammonium groups in crystal.')
 
     # Do a network analysis to find the ligand atoms
     interc = Intercalator(debug=0)
     pmg_structure = AseAtomsAdaptor.get_structure(crystal)
     crystal_graph = interc.structure_to_graph(pmg_structure)
     crystal_subgraphs = interc.structure_graph_to_subgraphs(crystal_graph)
-    print(f'Found {len(crystal_subgraphs)} subgraphs in crystal.')
+    parprint(f'Found {len(crystal_subgraphs)} subgraphs in crystal.')
 
     # Identify which subgraphs contain ligand atoms
     ligand_subgraphs = [i for i, sg in enumerate(crystal_subgraphs) if any([True for a in nitrogen_atoms if a in sg.nodes])]
-    print(f'Found {len(ligand_subgraphs)} ligands.')
+    parprint(f'Found {len(ligand_subgraphs)} ligands in crystal.')
 
     # Choose which ligands to remove
     ligands_to_remove= []
     num_ligands_to_remove = np.round(replace_fraction*len(ligand_subgraphs), decimals=0)
     if num_ligands_to_remove == 0:
-        print('Fraction to remove less than one, no changes made.')
+        parprint('Fraction to remove less than one, no changes made.')
         return crystal
 
     # Space out the ligands to be removed by index
@@ -621,7 +622,7 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
         if 0 == (i % (len(ligand_subgraphs)/num_ligands_to_remove)):
             ligands_to_remove.append(i-1)
 
-    print(f'Removing ligands: {ligands_to_remove}')
+    parprint(f'Removing ligands: {ligands_to_remove}')
 
     # Check type of the ligand structure
     new_ligand = convert_to_ase(new_ligand)
@@ -629,7 +630,7 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
     # Get some info about the new ligand
     # Assume there is one ammonium group in the ligand
     ligand_nitrogen_atom = find_ammonium_atoms(new_ligand)
-    print(f'Found {len(ligand_nitrogen_atom)} ammonium in new ligand.')
+    parprint(f'Found {len(ligand_nitrogen_atom)} ammonium in new ligand.')
     if len(ligand_nitrogen_atom) == 1:
         ligand_nitrogen_atom = ligand_nitrogen_atom[0]
     else:
@@ -658,7 +659,6 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
         for i, n_atom_index in enumerate(nitrogen_atoms):
             if n_atom_index in sg.nodes:
                 nitrogen_location = positions[n_atom_index]
-                print(f'Found nitrogen {n_atom_index} in subgraph {ligand_index}')
 
         if len(nitrogen_location):
             ligand_to_add = new_ligand.copy()
@@ -678,7 +678,7 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
             for a in ligand_to_add:
                 new_crystal.append(a)
         else:
-            print('Can not get location and orientation of old ligand')
+            parprint('Can not get location and orientation of old ligand')
             return
 
     return new_crystal
@@ -706,14 +706,14 @@ def align_ligands(ligand1, ligand2):
     if len(l1n) == 1:
         l1n = l1n[0]
     else:
-        print('Found more than one ammonium in ligand', str(l1))
+        parprint('Found more than one ammonium in ligand', str(l1))
         return
 
     l2n = find_ammonium_atoms(l2)
     if len(l2n) == 1:
         l2n = l2n[0]
     else:
-        print('Found more than one ammonium in ligand', str(l2))
+        parprint('Found more than one ammonium in ligand', str(l2))
         return
 
     # Center the nitrogen atoms before rotation
