@@ -606,23 +606,21 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
     parprint(f'Found {len(crystal_subgraphs)} subgraphs in crystal.')
 
     # Identify which subgraphs contain ligand atoms
-    ligand_subgraphs = [i for i, sg in enumerate(crystal_subgraphs) if any([True for a in nitrogen_atoms if a in sg.nodes])]
+    ligand_subgraphs = [sg for sg in crystal_subgraphs if any([True for a in nitrogen_atoms if a in sg.nodes])]
     parprint(f'Found {len(ligand_subgraphs)} ligands in crystal.')
 
     # Choose which ligands to remove
-    ligands_to_remove= []
-    num_ligands_to_remove = np.round(replace_fraction*len(ligand_subgraphs), decimals=0)
+    num_ligands_to_remove = int(np.round(replace_fraction*len(ligand_subgraphs), decimals=0))
     if num_ligands_to_remove == 0:
         parprint('Fraction to remove less than one, no changes made.')
         return crystal
 
     # Space out the ligands to be removed by index
     # This should be more sophisticated, eg. using spatial coordinates instead of index
-    for i in range(1,1+len(ligand_subgraphs)):
-        if 0 == (i % (len(ligand_subgraphs)/num_ligands_to_remove)):
-            ligands_to_remove.append(i-1)
-
-    parprint(f'Removing ligands: {ligands_to_remove}')
+    ligands_to_remove = list(range((len(ligand_subgraphs) % num_ligands_to_remove),
+                                   len(ligand_subgraphs),
+                                   int(len(ligand_subgraphs)/num_ligands_to_remove)))
+    parprint(f'Removing {len(ligands_to_remove)} ligands with indices: {ligands_to_remove}')
 
     # Check type of the ligand structure
     new_ligand = convert_to_ase(new_ligand)
@@ -643,7 +641,7 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
     new_crystal = crystal.copy()
     atoms_to_remove = []
     for ligand_index in ligands_to_remove:
-        sg = crystal_subgraphs[ligand_index]
+        sg = ligand_subgraphs[ligand_index]
         atoms_to_remove += sg.nodes
 
     del new_crystal[atoms_to_remove]
@@ -652,11 +650,11 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
     for ligand_index in ligands_to_remove:
 
         # Get the subgraph (atomic indices) of one of the deleted ligands
-        sg = crystal_subgraphs[ligand_index]
+        sg = ligand_subgraphs[ligand_index]
 
         # Find the ammonium nitrogen that was in the deleted ligand
         nitrogen_location = None
-        for i, n_atom_index in enumerate(nitrogen_atoms):
+        for n_atom_index in nitrogen_atoms:
             if n_atom_index in sg.nodes:
                 nitrogen_location = positions[n_atom_index]
 
