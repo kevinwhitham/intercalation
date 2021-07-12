@@ -681,6 +681,8 @@ def replace_ligands(crystal, new_ligand, replace_fraction=1.0):
             parprint('Can not get location and orientation of old ligand')
             return
 
+    # Wrap new ligand atoms inside the unit cell
+    new_crystal.wrap()
     return new_crystal
 
 
