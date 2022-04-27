@@ -20,7 +20,7 @@ setuptools.setup(
                       "pillow>=8.1.2"],
     classifiers = [
             "Programming Language :: Python :: 3",
-            "License :: OSI Approvied :: GNU General PUblic License v3 or later (GPLv3+)",
+            "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
             "Operating System :: OS Independent",
     ],
 
