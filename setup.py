@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name = "perovskite_intercalation",
-    version = "0.0.6",
+    version = "0.1.1",
     author = "Kevin Whitham",
     author_email = "kevin.whitham@gmail.com",
     description = "Routines to create intercalated perovskite crystals",
@@ -24,7 +24,8 @@ setuptools.setup(
             "Operating System :: OS Independent",
     ],
 
-    packages = setuptools.find_packages(),
+    package_dir = {"": "src"},
+    packages = setuptools.find_packages(where="src"),
     python_requires = ">=3",
 )
 
