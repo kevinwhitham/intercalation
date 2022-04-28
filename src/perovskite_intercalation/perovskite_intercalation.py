@@ -22,7 +22,7 @@ from PIL import Image
 
 
 class Intercalator:
-    def __init__(self, debug):
+    def __init__(self, debug=1):
 
         # Set a debug level
         # python's warnings module won't work here becuase
