@@ -740,27 +740,3 @@ def align_ligands(ligand1, ligand2):
     return l2
 
 
-# from ipyvtk_simple.viewer import ViewInteractiveWidget
-#
-# def view_structure_in_notebook(structure):
-#     sv = StructureVis(show_bonds=True, show_polyhedron=False)
-#     sv.ren_win.SetOffScreenRendering(1)
-#     sv.ren_win.SetSize(1200, 1200)
-#     sv.set_structure(structure)
-#     sv.helptxt_actor.VisibilityOff()
-#     ViewInteractiveWidget(sv.ren_win, quality=100, quick_quality=100)
-#
-# def plot_subgraphs_histogram(num_subgraphs):
-#     """
-#     Plot a histogram of the vector num_subgraphs.
-#     """
-#     max_bin = max(5,max(num_subgraphs))
-#     max_bin_label = f'5-{max_bin}' if max_bin > 5 else '5'
-#     bins = [0,1,2,3,4,5,max_bin]
-#     sg_hist = np.histogram(num_subgraphs, bins=bins)
-#     fig, ax = plt.subplots()
-#     ax.bar(x = sg_hist[1][:-1], height = sg_hist[0], width=0.5)
-#     plt.title(f'No. of Bonding Networks found in {len(num_subgraphs)} Perovskite Unit Cells')
-#     plt.xlabel('Bonding Networks in Unit Cell')
-#     ax.set_xticks(bins[:-1])
-#     ax.set_xticklabels(bins[:-2]+[max_bin_label])
