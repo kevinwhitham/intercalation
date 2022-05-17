@@ -739,4 +739,32 @@ def align_ligands(ligand1, ligand2):
 
     return l2
 
+def get_ligand_atoms(atoms):
+    '''
+    Returns a list the length of the number of ligand molecules.
+    Each list member is a list of the atom indices for each ligand molecule.
+    :param atoms: structure with ligand molecules (must have ammoniacal nitrogens)
+    :type atoms: ASE Atoms
+    :return: atom indices for atoms in each ligand molecule
+    :rtype: list of lists of ints
+    '''
 
+    # Get the indices of the ammonium group nitrogen crystal
+    ammonium_nitrogen_atoms = find_ammonium_atoms(atoms)
+    parprint(f'Found {len(ammonium_nitrogen_atoms)} ammonium groups in crystal.')
+
+    # Do a network analysis to find the ligand atoms
+    interc = Intercalator(debug=0)
+    pmg_structure = AseAtomsAdaptor.get_structure(atoms)
+    crystal_graph = interc.structure_to_graph(pmg_structure)
+    crystal_subgraphs = interc.structure_graph_to_subgraphs(crystal_graph)
+
+    # Identify which subgraphs contain ligand atoms
+    ligand_subgraphs = [sg for sg in crystal_subgraphs if any([True for a in ammonium_nitrogen_atoms if a in sg.nodes])]
+    parprint(f'Found {len(ligand_subgraphs)} ligand molecules in crystal.')
+
+    ligand_indices = []
+    for sg in ligand_subgraphs:
+        ligand_indices.append([i for i in sg.nodes])
+
+    return ligand_indices
